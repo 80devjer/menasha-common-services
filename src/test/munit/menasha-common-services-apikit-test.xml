@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:mock="http://www.mulesoft.org/schema/mule/mock" xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.mulesoft.org/schema/mule/mock http://www.mulesoft.org/schema/mule/mock/current/mule-mock.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <spring:beans>
+        <spring:import resource="classpath:menasha-common-services.xml" />
+  		<spring:import resource="classpath:globals.xml" />
+   		<spring:import resource="classpath:conversions.xml" />  		
+    </spring:beans>
+    
+   
+    <munit:config mock-connectors="false" mock-inbounds="false" doc:name="MUnit configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8081" basePath="/api/commonServices/" doc:name="HTTP Request Configuration"/>
+    <munit:test name="get:/conversion:menasha-common-services-config-200-application/json-FlowTest" description="Verifying functionality of [get:/conversion:menasha-common-services-config-200-application/json]"  >
+        <mock:when doc:name="Mock - get sharepoint conversion query" messageProcessor="sharepoint2010:list-item-query">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['SharePoint conversion query']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[getResource('scaffolder/response/sharepoint-get-conversion.json').asString()]"/>
+        </mock:when>
+                <mock:when doc:name="Mock - get sharepoint partner query" messageProcessor="sharepoint2010:list-item-query">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['SharePoint partner query']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[getResource('scaffolder/response/sharepoint-get-partner.json').asString()]"/>
+
+        </mock:when>
+                <mock:when doc:name="Mock - get sharepoint conversionType query" messageProcessor="sharepoint2010:list-item-query">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['SharePoint conversion type query']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[getResource('scaffolder/response/sharepoint-get-conversionType.json').asString()]"/>
+
+        </mock:when>
+        <set-variable variableName="fromValue" value="#['RANDAS2']" doc:name="fromValue" />
+        <set-variable variableName="partner" value="#['JJ']" doc:name="partner" />
+        <set-variable variableName="conversionType" value="#['plant']" doc:name="conversionType" />
+        <http:request config-ref="HTTP_Request_Configuration" method="GET" path="/conversion" doc:name="HTTP">
+            <http:request-builder>
+                <http:header headerName="Accept" value="application/json" />
+                <http:query-param paramName="fromValue" value="#[flowVars['fromValue']]" />
+                <http:query-param paramName="partner" value="#[flowVars['partner']]" />
+                <http:query-param paramName="conversionType" value="#[flowVars['conversionType']]" />
+            </http:request-builder>
+        </http:request>
+        <object-to-string-transformer doc:name="http response to string" />
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="assert that - http.status eq 200"/>
+        <dw:transform-message doc:name="convert payload to java object to test asserts" metadata:id="f8a70915-9391-45bc-99b5-f95c08c7e3e2">
+            <dw:input-payload mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload.value]]></dw:set-payload>
+        </dw:transform-message>
+
+        <munit:assert-on-equals message="The response payload partnerId is not correct!" expectedValue="3" actualValue="#[payload.partnerId]" doc:name="assert that - partner id is as expected" />
+        <munit:assert-on-equals message="The response payload partnerName is not correct!" expectedValue="JJ" actualValue="#[payload.partnerName]" doc:name="assert that - partner name is as expected" />
+        <munit:assert-on-equals message="The response payload conversionTypeId is not correct!" expectedValue="1" actualValue="#[payload.conversionTypeId]" doc:name="assert that - convesion type id is as expected" />
+        <munit:assert-on-equals message="The response payload conversionTypeName is not correct!" expectedValue="plant" actualValue="#[payload.conversionTypeName]" doc:name="assert that - conversion type name is as expected" />
+        <munit:assert-on-equals message="The response payload fromValue is not correct!" expectedValue="RANDAS2" actualValue="#[payload.fromValue]" doc:name="assert that - from value is as expected" />
+        <munit:assert-on-equals message="The response payload toValue is not correct!" expectedValue="1355" actualValue="#[payload.toValue]" doc:name="assert that - to value is as expected" />
+    </munit:test>
+    <munit:test name="get:/conversions:menasha-common-services-config-200-application/json-FlowTest" description="Verifying functionality of [get:/conversions:menasha-common-services-config-200-application/json]" >
+       <mock:when doc:name="Mock - get sharepoint conversion query" messageProcessor="sharepoint2010:list-item-query">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Sharepoint conversions query']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[getResource('scaffolder/response/sharepoint-get-conversions.json').asString()]"/>
+
+        </mock:when>
+        <http:request config-ref="HTTP_Request_Configuration" method="GET" path="/conversions" doc:name="HTTP">
+            <http:request-builder>
+                <http:header headerName="Accept" value="application/json" />
+            </http:request-builder>
+        </http:request>
+        <object-to-string-transformer doc:name="http response to string" />
+        <munit:assert-true message="The HTTP Status code is not correct!" condition="#[messageInboundProperty('http.status').is(eq(200))]" doc:name="assert that - http.status eq 200" />
+        <logger level="INFO" doc:name="Logger"/>
+        <munit:assert-on-equals message="The response payload is not correct!" expectedValue="#[getResource('scaffolder/response/get_200_conversions_application_json.json').asString()]" actualValue="#[payload]" doc:name="assert that - payload is as expected" />
+    </munit:test>
+</mule>

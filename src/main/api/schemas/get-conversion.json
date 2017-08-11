@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {},
+    "id": "http://example.com/example.json",
+    "properties": {
+        "value": {
+            "id": "/properties/value",
+            "properties": {
+                "conversionTypeId": {
+                    "id": "/properties/value/properties/conversionTypeId",
+                    "type": "string"
+                },
+                "conversionTypeName": {
+                    "id": "/properties/value/properties/conversionTypeName",
+                    "type": "string"
+                },
+                "fromValue": {
+                    "id": "/properties/value/properties/fromValue",
+                    "type": "string"
+                },
+                "partnerId": {
+                    "id": "/properties/value/properties/partnerId",
+                    "type": "string"
+                },
+                "partnerName": {
+                    "id": "/properties/value/properties/partnerName",
+                    "type": "string"
+                },
+                "toValue": {
+                    "id": "/properties/value/properties/toValue",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "type": "object"
+}

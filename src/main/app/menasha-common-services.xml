@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:sharepoint="http://www.mulesoft.org/schema/mule/sharepoint" xmlns:sharepoint2010="http://www.mulesoft.org/schema/mule/sharepoint2010" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/sharepoint http://www.mulesoft.org/schema/mule/sharepoint/current/mule-sharepoint.xsd
+http://www.mulesoft.org/schema/mule/sharepoint2010 http://www.mulesoft.org/schema/mule/sharepoint2010/current/mule-sharepoint2010.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <flow name="menasha-common-services-main">
+        <http:listener config-ref="MenashaHttpListener" path="/api/commonServices/*" doc:name="HTTP" />
+        <apikit:router config-ref="menasha-common-services-config" doc:name="APIkit Router" />
+        <exception-strategy ref="menasha-common-services-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy" />
+    </flow>
+    <flow name="menasha-common-services-console">
+        <http:listener config-ref="MenashaHttpListener" path="/console/*" doc:name="HTTP" />
+        <apikit:console config-ref="menasha-common-services-config" doc:name="APIkit Console" />
+    </flow>
+    
+        <flow name="get:/conversion:menasha-common-services-config">
+        <flow-ref name="getConversionFlow" doc:name="getConversionsFlow"/>
+
+    </flow>
+    
+    
+    <flow name="get:/conversions:menasha-common-services-config">
+        <flow-ref name="getConversionsFlow" doc:name="getConversionsFlow"/>
+
+    </flow>
+
+</mule>

@@ -1,0 +1,19 @@
+
+<GetListItems xmlns="http://schemas.microsoft.com/sharepoint/soap/">
+	<listName>States</listName>
+	<viewName></viewName>
+	<query>
+		<Where>
+			<Eq>
+				<FieldRef Name='CurrentStatus' />
+				<Value Type='Boolean'>1</Value>
+			</Eq>
+		</Where>
+	</query>
+	<ViewFields>
+		<FieldRef Name='Title' />
+		<FieldRef Name='CurrentStatus' />
+	</ViewFields>
+	<rowLimit>100</rowLimit>
+	<webID></webID>
+</GetListItems>

@@ -1,0 +1,39 @@
+#%RAML 0.8
+title: Common services
+
+/conversion:
+  get:
+    description: This is an API for converting a value from one value to another.
+    queryParameters: 
+      partner:
+        displayName: partner
+        type: string
+        description: partner according to https://link.menasha.com/operations/eai/Lists/partners/AllItems.aspx
+        required: true
+      conversionType:
+        displayName: conversion type
+        type: string
+        description: conversion type according to https://link.menasha.com/operations/eai/Lists/conversion%20types/AllItems.aspx
+        required: true
+      fromValue:
+        displayName: from value
+        type: string
+        description: the value to convert
+        required: true      
+    responses:
+      200:
+        body:
+          application/json: 
+            schema: !include schemas/get-conversion.json
+            example: !include examples/get-conversion.json 
+            
+/conversions:
+  get:
+    description: This is an API for converting a value from one value to another.
+    responses:
+      200:
+        body:
+          application/json: 
+            schema: !include schemas/get-conversion.json
+            example: !include examples/get-conversion.json 
+

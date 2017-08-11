@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:sharepoint2010="http://www.mulesoft.org/schema/mule/sharepoint2010" xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sharepoint2010 http://www.mulesoft.org/schema/mule/sharepoint2010/current/mule-sharepoint2010.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+
+    <sub-flow name="menasha-common-services-get-partner-id">
+        <set-variable variableName="query" value="SELECT id FROM partners where Title = '#[flowVars.parameters.partnerName]'" doc:name="Create query" />
+        <logger message="querying partners list with #[flowVars.query]" level="INFO" doc:name="Logger" />
+        <sharepoint2010:list-item-query config-ref="ConversionsSharePointConfig" query="dsql:#[flowVars.query]" doc:name="SharePoint partner query" />
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="valueOfSharepointResponse=#[message.payload]" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="Transform Message"  >
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload[0].id]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+    <sub-flow name="menasha-common-services-get-conversion-type-id">
+        <set-variable variableName="query" value="SELECT id FROM 'conversion types' where Title = '#[flowVars.parameters.conversionTypeName]'" doc:name="Create query" />
+        <logger message="querying conversion type list with #[flowVars.query]" level="INFO" doc:name="Logger" />
+        <sharepoint2010:list-item-query config-ref="ConversionsSharePointConfig" query="dsql:#[flowVars.query]" doc:name="SharePoint conversion type query" />
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="valueOfSharepointResponse=#[message.payload]" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="Transform Message"  >
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload[0].id]]></dw:set-payload>
+        </dw:transform-message>
+    </sub-flow>
+    <flow name="getConversionFlow">
+        <dw:transform-message doc:name="store parameters in a variable">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+}]]></dw:set-payload>
+            <dw:set-variable variableName="parameters"><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	partnerId:'',
+	partnerName: inboundProperties."http.query.params".partner,
+	conversionTypeId:'',
+	conversionTypeName: inboundProperties."http.query.params".conversionType,
+	fromValue: inboundProperties."http.query.params".fromValue,
+	toValue:''
+}]]></dw:set-variable>
+        </dw:transform-message>
+        <enricher target="#[flowVars.parameters.partnerId]" doc:name="Message Enricher - get partner id from name">
+            <flow-ref name="menasha-common-services-get-partner-id" doc:name="menasha-common-services-get-partner-id" />
+        </enricher>
+        <enricher target="#[flowVars.parameters.conversionTypeId]" doc:name="Message Enricher - get conversion type id from name">
+            <flow-ref name="menasha-common-services-get-conversion-type-id" doc:name="menasha-common-services-get-conversion-type-id" />
+        </enricher>
+        <set-variable variableName="query" value="SELECT conversionType,fromValue,id,partner,toValue FROM conversions where fromValue = '#[flowVars.parameters.fromValue]'" doc:name="Create SharePoint Query Variable"/>
+        <logger message="query=#[flowVars.query]" level="INFO" doc:name="Logger"/>
+
+        <sharepoint2010:list-item-query config-ref="ConversionsSharePointConfig" query="dsql:#[flowVars.query]" fetchSize="10" doc:name="SharePoint conversion query"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <json:json-to-object-transformer returnClass="java.util.ArrayList" doc:name="JSON to Object"/>
+        <foreach collection="#[message.payload]" doc:name="For Each">
+            <choice doc:name="Choice">
+                <when expression="#[message.payload.conversionType.id == flowVars.parameters.conversionTypeId  &amp;&amp; message.payload.partner.id == flowVars.parameters.partnerId ]">
+                    <logger message="found the record" level="INFO" doc:name="Logger"/>
+                    <expression-component doc:name="Expression"><![CDATA[flowVars.parameters.toValue = message.payload.toValue]]></expression-component>
+                </when>
+                <otherwise>
+                    <logger message="not the record we're looking for conversionType=#[message.payload.conversionType.id] partnerId=#[message.payload.partner.id]" level="INFO" doc:name="Logger"/>
+                </otherwise>
+            </choice>
+        </foreach>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	value: flowVars.parameters
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <object-to-string-transformer doc:name="Object to String"/>
+        <logger message="returning #[message.payload]" level="INFO" doc:name="Logger"/>
+
+
+<!--         <sharepoint2010:list-item-query config-ref="ConversionsSharePointConfig" query="&lt;?xml version='1.0'&gt; &lt;ns0:GetListItems xmlns:ns0=&quot;http://schemas.microsoft.com/sharepoint/soap/&quot;&gt;   &lt;ns0:ListName&gt;Conversions&lt;/ns0:ListName&gt;   &lt;ns0:ViewName&gt;&lt;/ns0:ViewName&gt;   &lt;ns0:Query&gt;     &lt;ns0:Where&gt;       &lt;ns0:Eq&gt;         &lt;ns0:FieldRef Name=&quot;FromValue&quot;&gt;           &lt;ns0:Value Type=&quot;String&quot;&gt;RANDAS2&lt;/ns0:Value&gt;         &lt;/ns0:FieldRef&gt;       &lt;/ns0:Eq&gt;     &lt;/ns0:Where&gt;   &lt;/ns0:Query&gt;   &lt;ns0:ViewFields&gt;     &lt;ns0:FieldRef Name=&quot;ToValue&quot;&gt;&lt;/ns0:FieldRef&gt;&lt;ns0:FieldRef Name=&quot;FromValue&quot;&gt;   &lt;/ns0:ViewFields&gt;   &lt;ns0:RowLimit&gt;100&lt;/ns0:RowLimit&gt;   &lt;ns0:WebID&gt;&lt;/ns0:WebID&gt; &lt;/ns0:GetListItems&gt;" doc:name="Microsoft SharePoint 2010"  />  -->
+
+    </flow>
+    <flow name="getConversionsFlow">
+        <sharepoint2010:list-item-query config-ref="ConversionsSharePointConfig" query="dsql:SELECT conversionType,fromValue,partner,toValue FROM conversions"  doc:name="Sharepoint conversions query"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="valueOfSharepointResponse=#[message.payload]" level="INFO" doc:name="Logger"/>
+        <dw:transform-message doc:name="Transform Message" >
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload
+]]></dw:set-payload>
+        </dw:transform-message>
+
+    </flow>
+
+
+</mule>
