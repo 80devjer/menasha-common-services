@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
     
    
     <munit:config mock-connectors="false" mock-inbounds="false" doc:name="MUnit configuration"/>
-    <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8081" basePath="/api/commonServices/" doc:name="HTTP Request Configuration"/>
+    <http:request-config name="HTTP_Request_Configuration" host="localhost" port="8085" basePath="/api/commonServices/" doc:name="HTTP Request Configuration"/>
     <munit:test name="get:/conversion:menasha-common-services-config-200-application/json-FlowTest" description="Verifying functionality of [get:/conversion:menasha-common-services-config-200-application/json]"  >
         <mock:when doc:name="Mock - get sharepoint conversion query" messageProcessor="sharepoint2010:list-item-query">
             <mock:with-attributes>
