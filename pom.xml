@@ -113,6 +113,9 @@
 							<format>html</format>
 						</formats>
 					</coverage>
+					<systemPropertyVariables>
+						<env>munit</env>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 		</plugins>
